@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commute Comparison</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">Commute Comparison</div>
+    <div class="subtitle">Compare commutes from your current and potential homes</div>
+  </header>
+
+  <main class="layout">
+    <section class="left-panel" aria-label="Inputs and results">
+      <div class="left-scroll">
+        <section class="section" aria-labelledby="originsHeading">
+          <h2 id="originsHeading">Starting points</h2>
+          <div id="originsList" class="list origins"></div>
+          <div class="row">
+            <button id="addOriginBtn" class="btn btn-secondary" type="button">+ Add starting point</button>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="settingsHeading">
+          <h2 id="settingsHeading">Commute settings</h2>
+          <div class="form-grid settings">
+            <div class="form-field">
+              <label for="modeSelect">Mode</label>
+              <select id="modeSelect">
+                <option value="DRIVING" selected>Driving</option>
+                <option value="TRANSIT">Transit</option>
+                <option value="WALKING">Walking</option>
+                <option value="BICYCLING">Cycling</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="departureTime">Departure time</label>
+              <input id="departureTime" type="time" value="08:30">
+              <div class="chips">
+                <button class="chip" data-time="08:30" type="button">Morning peak</button>
+                <button class="chip" data-time="17:30" type="button">Evening peak</button>
+                <button class="chip" data-time="11:00" type="button">Off-peak</button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="trafficSelect">Traffic</label>
+              <select id="trafficSelect">
+                <option value="RANGE" selected>Range (optimistic/best-guess/pessimistic)</option>
+                <option value="SINGLE">Single estimate (best-guess)</option>
+              </select>
+            </div>
+          </div>
+
+          <details class="advanced">
+            <summary>Advanced</summary>
+            <div id="advancedSettings" class="form-grid">
+              <div class="form-field">
+                <label for="windowStart">Start time</label>
+                <input id="windowStart" type="time" value="08:00">
+              </div>
+              <div class="form-field">
+                <label for="windowEnd">End time</label>
+                <input id="windowEnd" type="time" value="10:00">
+              </div>
+              <div class="form-field">
+                <label for="windowStep">Step (minutes)</label>
+                <input id="windowStep" type="number" min="1" value="15">
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="section" aria-labelledby="destinationsHeading">
+          <div class="section-toolbar">
+            <h2 id="destinationsHeading">Destinations</h2>
+            <div class="toolbar-actions">
+              <button id="addDestBtn" class="btn btn-secondary" type="button">+ Add destination</button>
+              <button id="bulkAddBtn" class="btn btn-secondary" type="button">Bulk add</button>
+              <button id="importCsvBtn" class="btn btn-secondary" type="button">Import CSV</button>
+              <button id="clearDestBtn" class="btn btn-ghost" type="button">Clear</button>
+              <input id="importCsvInput" type="file" accept=".csv" hidden>
+            </div>
+          </div>
+          <div id="destinationsList" class="list destinations"></div>
+        </section>
+
+        <div class="sticky-controls">
+          <div class="controls-row">
+            <button id="computeBtn" class="btn btn-primary" type="button" disabled>Compute</button>
+            <div id="elementsCounter" class="muted">Elements: 0 × 0</div>
+          </div>
+          <div class="tabs" role="tablist">
+            <button id="tabTable" role="tab" aria-selected="true" class="tab active" type="button">Table</button>
+            <button id="tabVisitAll" role="tab" aria-selected="false" class="tab" type="button">Visit-all</button>
+          </div>
+          <div id="summaryTile" class="summary" aria-live="polite"></div>
+        </div>
+
+        <section class="section results" aria-labelledby="resultsHeading">
+          <h2 id="resultsHeading" class="sr-only">Results</h2>
+          <div id="resultsTable" class="results-table" hidden>
+            <div class="filters">
+              <div class="form-field">
+                <label for="filterCategory">Category</label>
+                <select id="filterCategory" multiple>
+                  <option value="Work">Work</option>
+                  <option value="School">School</option>
+                  <option value="Shop">Shop</option>
+                  <option value="Rest">Rest</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="filterWinner">Winner</label>
+                <select id="filterWinner">
+                  <option value="">Any</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="filterDelta">Show abs(Δ) ≥ N min</label>
+                <input id="filterDelta" type="range" min="0" max="60" value="0">
+                <div class="range-value"><span id="filterDeltaValue">0</span> min</div>
+              </div>
+            </div>
+            <div class="table-wrapper" role="grid" aria-label="Commute comparison table"></div>
+          </div>
+
+          <div id="visitAllContainer" class="visit-all" hidden></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="right-panel" aria-label="Map">
+      <div id="map" class="map" role="application" aria-label="Commute map"></div>
+      <div id="mapLegend" class="map-legend" aria-label="Map legend"></div>
+    </section>
+  </main>
+
+  <dialog id="bulkDialog">
+    <form method="dialog" class="dialog-content">
+      <h3>Bulk add destinations</h3>
+      <p>Each line: address, category, nickname</p>
+      <textarea id="bulkTextarea" rows="8" placeholder="123 Main St, Work, Office\nCafe Roma, Shop, Coffee"></textarea>
+      <div class="dialog-actions">
+        <button type="submit" value="cancel" class="btn btn-ghost">Cancel</button>
+        <button id="bulkSubmit" type="button" class="btn btn-primary">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    window.USE_MOCKS = true;
+  </script>
+  <script src="app.js"></script>
+  <!-- Google Maps JS API: insert your API key below -->
+  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=onGoogleMapsReady" async defer></script> -->
+</body>
+  
+</html>
+
+
